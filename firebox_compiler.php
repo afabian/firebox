@@ -387,6 +387,13 @@ function fbx_get_blocks_from_lex($lex)
 	{
 		if ($lexeme['state'] == 'php' && $lexeme['type'] == 'o_curly')
 		{
+			// reset before each scan — prevents stale values from a previous iteration
+			// being used when the backward scan finds no matching keyword
+			$type = null;
+			$typeindex = null;
+			$name = null;
+			$nameindex = null;
+
 			$backdepth = 0;
 			for ($i=$counter; $i>=0; $i--)
 			{
@@ -410,7 +417,7 @@ function fbx_get_blocks_from_lex($lex)
 						{
 							$type = $word;
 							$typeindex = $i;
-							if ($type == 'function') 
+							if ($type == 'function')
 							{
 								$name = $lastword;
 								$nameindex = $lastwordindex;
@@ -420,7 +427,7 @@ function fbx_get_blocks_from_lex($lex)
 					}
 				}
 			}
-			
+
 			$blocks[] = array('start' => $lexeme['pos'], 'startindex' => $counter, 'type' => $type, 'typeindex' => $typeindex, 'depth' => $depth, 'end' => false, 'endindex' => false);
 			if ($type == 'function') $blocks[count($blocks)-1]['name'] = $name;
 			if ($type == 'function') $blocks[count($blocks)-1]['nameindex'] = $nameindex;
