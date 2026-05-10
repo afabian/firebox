@@ -35,7 +35,7 @@ function fbx_compile($filename)
 	
 	if (!isset($fbx['libs']))
 	{
-		$fbx['libs'] = fbx_load_libs($fbx['site_root'] . 'lib/');
+		$fbx['libs'] = fbx_load_libs();
 	}
 	
 	if (fbx_url_option('fbx_compiler_debug')) $content['debugpanes']['compiler'] .= "<br><br>Compiling $filename<br><br>";
@@ -474,29 +474,18 @@ function fbx_get_function_references_from_lex($lex)
 function fbx_load_libs()
 {
 	global $fbx;
-	
+
 	$libs = array();
-	
-	if (fbx_url_option('fbx_compiler_debug')) $content['debugpanes']['compiler'] .=	"Scanning for updated libraries<br>";
-	
+
+	if (fbx_url_option('fbx_compiler_debug')) $content['debugpanes']['compiler'] .= "Scanning for updated libraries<br>";
+
 	$files = fbx_dir_tree_files($fbx['site_root'] . 'lib/', '/.*\.php$/');
 	foreach ($files as $lib)
 	{
-		$output_file = $fbx['site_root'] . 'parsed/' . @$mode . 'lib.' . basename($lib);
-		if (file_exists($output_file)) {
-			if (filemtime($lib) > filemtime($output_file))
-			{
-				if (fbx_url_option('fbx_compiler_debug')) $content['debugpanes']['compiler'] .=	"Library $lib has changed.  Recompiling.<br>";
-				$libs = array_merge($libs, fbx_get_function_names($lib));
-			}
-		}
-		else {
-			// MARKER
-			if (fbx_url_option('fbx_compiler_debug')) $content['debugpanes']['compiler'] .= "Library $lib has never been compiled.  Compiling.<br>";
-			$libs = array_merge($libs, fbx_get_function_names($lib));
-		}
+		// fbx_get_function_names handles its own mtime-based caching
+		$libs = array_merge($libs, fbx_get_function_names($lib));
 	}
-	
+
 	return($libs);
 }
 
