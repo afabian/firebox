@@ -51,7 +51,9 @@ function fbx_compile($filename)
 
 	// if that file exists and is up-to-date, return now
 	
-	if (file_exists($outputfile) && filemtime($filename) <= filemtime($outputfile))
+	$sourcefile = $fbx['site_root'] . $filename;
+
+	if (file_exists($outputfile) && filemtime($sourcefile) <= filemtime($outputfile))
 	{
 		fbx_debug("Skipping compile of $filename because it's parsed copy is still current.", __FILE__, __LINE__);
 		return;
@@ -60,9 +62,10 @@ function fbx_compile($filename)
 	fbx_debug("Compiling $filename", __FILE__, __LINE__);
 
 	// read in the source file
-	
+
 	fbx_debug("Reading file", __FILE__, __LINE__);
-	$input = join('', file($filename));
+	if (!file_exists($sourcefile)) fbx_error("Source file not found: $sourcefile");
+	$input = join('', file($sourcefile));
 		
 	// turn the file into lexemes
 	
