@@ -65,7 +65,6 @@ require($fbx['fbx_root'] . 'firebox_controller_functions.php');
 set_error_handler('fbx_error_handler', E_ALL);
 function fbx_error_handler($errno, $errstr, $errfile, $errline) {
 	if (!(error_reporting() & $errno)) return; // honour @ suppression (PHP 8: clears bit, not sets to 0)
-	if ($errno == 8) return;
 	if (strpos($errstr, 'Cannot send session cache limiter')) return;
 	while (ob_get_level()) ob_end_flush();
 	ob_start();

@@ -2,9 +2,9 @@
 
 global $fbx;
 
-$target = $_REQUEST['target'] ? $_REQUEST['target'] . '/' : $fbx['site_root'];
+$target = (isset($_REQUEST['target']) && $_REQUEST['target']) ? $_REQUEST['target'] . '/' : $fbx['site_root'];
 
-if (!is_dir($target)) mkdir($target, null, true);
+if (!is_dir($target)) mkdir($target, 0755, true);
 
 // create the skeleton project
 
