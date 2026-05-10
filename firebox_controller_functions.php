@@ -55,7 +55,7 @@ function query($filename)
 function relocate($url)
 {
 	fbx_execute_plugins('prerelocate', $url);
-	if (headers_sent()) echo "\n<script language=\"Javascript\">\ndocument.location.href='$url';\n</script>\n";
+	if (headers_sent()) echo "\n<script>\ndocument.location.href=" . json_encode($url, JSON_HEX_TAG) . ";\n</script>\n";
 	else header("Location: $url");
 	exit();
 }
