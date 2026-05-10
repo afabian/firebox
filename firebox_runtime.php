@@ -75,12 +75,13 @@ function fbx_error_handler($errno, $errstr, $errfile, $errline) {
 	die("<br>Handled Error at $errfile:$errline: $errno $errstr<br><pre>$output");
 }
 
-//register_shutdown_function('fbx_error_shutdown');
+register_shutdown_function('fbx_error_shutdown');
 function fbx_error_shutdown() {
 	$e = error_get_last();
-	if (!is_null($e) && $e['type'] != 8 && $e['type'] != 2048) {
-		while (ob_get_level()) ob_end_flush();
-		die("<br>Shutdown Error at {$e['file']}:{$e['line']}: {$e['type']}: {$e['message']}");
+	$fatal = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR);
+	if (!is_null($e) && in_array($e['type'], $fatal)) {
+		while (ob_get_level()) ob_end_clean();
+		die("<br>Fatal Error at {$e['file']}:{$e['line']}: {$e['message']}");
 	}
 }
 

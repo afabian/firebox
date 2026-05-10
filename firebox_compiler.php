@@ -211,7 +211,7 @@ function fbx_compile($filename)
 	
 	if (!count($functions))
 	{
-		array_unshift($lex, array('content' => '<? global $fbx, $content; ?>'));
+		array_unshift($lex, array('content' => '<?php global $fbx, $content; ?>'));
 	}
 	
 	// build out output by combining all of the modified lexemes back togethers

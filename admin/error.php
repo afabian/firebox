@@ -100,7 +100,7 @@ a {
 
 <br>
 
-<? global $fbx; ?>
+<?php global $fbx; ?>
 <div style="margin-left: 15px; margin-top: 20px;">
 Error: <?=$fbx['error_message']?>
 </div>
@@ -108,4 +108,4 @@ Error: <?=$fbx['error_message']?>
 <br><br>
 
 </div></div></div></div></div>
-<? } ?>
+<?php } ?>

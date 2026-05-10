@@ -1,4 +1,4 @@
-<?
+<?php
 
 global $fbx, $content;
 
