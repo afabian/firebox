@@ -87,8 +87,11 @@ function fbx_error_shutdown() {
 // load our settings
 
 fbx_debug('Loading settings', __FILE__, __LINE__);
-@include('settings.php');
-if (count($fbx['settings'])) foreach($fbx['settings'] as $setting => $value) fbx_debug("$setting = " . var_export($value, true), __FILE__, __LINE__);
+$_fbx_settings_file = $fbx['site_root'] . 'settings.php';
+if (!file_exists($_fbx_settings_file)) die('Firebox: settings.php not found in ' . $fbx['site_root']);
+try { include($_fbx_settings_file); } catch (ParseError $e) { die('Firebox: parse error in settings.php: ' . $e->getMessage()); }
+unset($_fbx_settings_file);
+if (isset($fbx['settings']) && count($fbx['settings'])) foreach($fbx['settings'] as $setting => $value) fbx_debug("$setting = " . var_export($value, true), __FILE__, __LINE__);
 $fbx['production'] = file_exists($fbx['site_root'] . 'parsed/production');
 if (fbx_url_option('fbx_develop')) $fbx['production'] = false;
 fbx_debug('Mode: ' . ($fbx['production'] ? 'Production' : 'Development'), __FILE__, __LINE__);
