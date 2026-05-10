@@ -64,7 +64,7 @@ require($fbx['fbx_root'] . 'firebox_controller_functions.php');
 
 set_error_handler('fbx_error_handler', E_ALL);
 function fbx_error_handler($errno, $errstr, $errfile, $errline) {
-	if (error_reporting() === 0) return; // honour @ suppression
+	if (!(error_reporting() & $errno)) return; // honour @ suppression (PHP 8: clears bit, not sets to 0)
 	if ($errno == 8) return;
 	if (strpos($errstr, 'Cannot send session cache limiter')) return;
 	while (ob_get_level()) ob_end_flush();
@@ -122,7 +122,7 @@ fbx_execute_plugins('prerequest');
 
 // figure out what action we're talking
 
-$fbx['action'] = @$_REQUEST['go'];
+$fbx['action'] = $_REQUEST['go'] ?? '';
 if (!$fbx['action']) $fbx['action'] = isset($fbx['settings']['default_action']) ? $fbx['settings']['default_action'] : 'fbx.welcome';
 fbx_debug("Chose Action: {$fbx['action']}", __FILE__, __LINE__);
 list($fbx['controller'], $fbx['method']) = explode('.', $fbx['action']);

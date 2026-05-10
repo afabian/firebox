@@ -18,4 +18,5 @@ function qry_u_todo_item_done($datafile, $item_id, $value)
 	$fh = fopen($datafile, 'w');
 	fputs($fh, "<?php return(" . var_export($items, true) . ");\n");
 	fclose($fh);
+	if (function_exists('opcache_invalidate')) opcache_invalidate($datafile, true);
 }

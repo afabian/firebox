@@ -108,6 +108,10 @@ $fbx['lex']['php']['not'] = '!';
 $fbx['lex']['php']['bitxor'] = '^';
 $fbx['lex']['php']['bitor'] = '|';
 
+$fbx['lex']['php']['error_suppress'] = '@';
+$fbx['lex']['php']['bitnot'] = '~';
+$fbx['lex']['php']['ns_sep'] = '\\';
+
 $fbx['lex']['php']['question'] = '?';
 $fbx['lex']['php']['scope'] = '::';
 $fbx['lex']['php']['colon'] = ':';

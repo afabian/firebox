@@ -27,4 +27,5 @@ function qry_i_todo_item($datafile, $title, $due, $details)
 	$fh = fopen($datafile, 'w');
 	fputs($fh, "<?php return(" . var_export($items, true) . ");\n");
 	fclose($fh);
+	if (function_exists('opcache_invalidate')) opcache_invalidate($datafile, true);
 }
