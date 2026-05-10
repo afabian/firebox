@@ -2,9 +2,7 @@
 
 ## Project Status (2026-05-10)
 
-Starting a full cleanup/debug/test/documentation pass. Goal: 100% working, edge cases documented, review-ready code, full test coverage. Strategy: refactor existing files (not rewrite), fix bugs in order, add tests as we go.
-
-Documentation pass is complete (README.md, DEVELOPER.md, this file). Next: fix bugs in priority order, add test harness.
+**Cleanup/debug/test/documentation pass complete.** All known bugs fixed, full test suite written and passing (184 tests), all documentation updated. Framework is production-ready for procedural PHP apps.
 
 ---
 
@@ -23,6 +21,9 @@ admin/create_todo.php        Creates demo todo app (fbx.create_todo)
 admin/start_production.php   Creates parsed/production file (fbx.start_production)
 admin/stop_production.php    Removes parsed/production file (fbx.stop_production)
 skeleton/                    Demo todo app source files + plugin implementations
+testproject/                 Runnable todo demo app (deployed to server for testing)
+tests/                       Test suite (compiler unit tests + HTTP integration tests)
+deploy.sh                    Rsyncs framework + testproject to 10.0.0.10
 ```
 
 ---
@@ -32,7 +33,7 @@ skeleton/                    Demo todo app source files + plugin implementations
 | Source | Compiled name |
 |---|---|
 | `controller/foo.php` → `bar()` | `controller_foo_bar` |
-| `controller/foo.php` → `test_bar()` | `test_controller_foo_bar` |
+| `controller/foo.php` → `test_bar()` | `test_controller_foo_bar` — note: methods named `test_*` are treated as test functions, not callable methods |
 | `model/foo/qry_thing.php` → `qry_thing()` | `model_foo_qry_thing_qry_thing` |
 | `model/foo/qry_thing.php` → `test_qry_thing()` | `test_model_foo_qry_thing_qry_thing` |
 | `view/foo/my_view.php` → `my_view()` | `view_foo_my_view_my_view` |
@@ -75,83 +76,68 @@ Heredoc: when `heredocident` is matched, the identifier text is used to dynamica
 
 `fbx_lexical_parser_next_lexeme()`: finds the earliest match across all patterns for the current state. Pattern can be a plain string (strpos) or a regex (preg_match). The 3rd element of an array rule is the capture group index to use as the matched content.
 
----
-
-## Known Bugs (prioritized)
-
-### High priority (correctness)
-
-**BUG-1: `fbx_load_libs()` path mismatch** (`firebox_compiler.php:485-495`)
-`fbx_load_libs()` looks for cached lib files at `parsed/[empty]lib.name.php`.
-`fbx_get_function_names()` writes them to `parsed/dev/lib.name.php` or `parsed/prod/lib.name.php`.
-The cache check always misses → lib directory rescanned every request.
-Fix: Change `fbx_load_libs()` to check `parsed/dev/` or `parsed/prod/` based on `$fbx['production']`.
-
-**BUG-2: `$type`/`$typeindex` uninitialized in `fbx_get_blocks_from_lex()`** (`firebox_compiler.php:421`)
-When `{` appears without a recognized preceding keyword (array literals, match expressions, anonymous classes), the backward scan reaches index 0 without breaking, and `$type`/`$typeindex` hold whatever was set by the previous iteration (or are undefined on first `{`). The resulting block entry has a garbage type.
-This doesn't cause a crash because the compile step only acts on blocks with `type == 'function'`, but it's fragile.
-Fix: Initialize `$type = ''` and `$typeindex = -1` before the backward scan; skip `$blocks[]` push if `$type` is empty.
-
-**BUG-3: Closing-brace indentation constraint** (noted in `skeleton/todo.php:7`)
-The backward scan in `fbx_get_blocks_from_lex()` finds the keyword preceding `{` by scanning backward through lexemes. It uses `$word` to track the last seen `word` lexeme. The issue is that `$type` and `$typeindex` are set inside the loop and break immediately — but if the `}` is indented (preceded by spaces), the space token appears as the last lexeme before `}`, which doesn't affect the scan. The real issue may be more subtle.
-Needs: A test case that reproduces the failure before fixing.
-
-**BUG-4: `fbx_compile()` uses relative file paths** (`firebox_compiler.php:54,65`)
-`file($filename)` and `filemtime($filename)` receive relative paths like `controller/foo.php`.
-If CWD ≠ site_root, these fail silently or read the wrong file.
-Fix: Prepend `$fbx['site_root']` to the input file read and mtime check.
-
-### Medium priority (robustness)
-
-**BUG-5: `@include('settings.php')` masks parse errors** (`firebox_runtime.php:89`)
-Fix: Remove `@`, add a `file_exists()` check first, emit a clear error if missing.
-
-**BUG-6: PHP 8 `count()` on non-array** (multiple locations in `firebox_runtime.php`)
-`count($fbx['settings'])`, `count($fbx['settings']['production_plugins'])`, etc. will throw `TypeError` in PHP 8 if keys are missing.
-Fix: Use `isset()` guards before `count()` calls.
-
-**BUG-7: `fbx_load_libs()` parameter ignored** (`firebox_compiler.php:474`)
-Called with a path argument but the function ignores it and uses `$fbx['site_root']` directly.
-Fix: Remove the parameter from the call site (line 38), keep the function as-is.
-
-### Low priority (hygiene)
-
-**BUG-8: E_NOTICE suppression** (`firebox_runtime.php:67`)
-`if ($errno == 8) return;` silences all PHP notices globally.
-Fix: Remove this line after fixing the underlying code that generates notices. Track down with `fbx_skip_tests` + debug mode.
-
-**BUG-9: XSS in `relocate()` JS fallback** (`firebox_controller_functions.php:58`)
-`document.location.href='$url'` — `$url` is not JS-escaped.
-Fix: `addslashes($url)` or `json_encode($url)` for the JS string.
-
-**BUG-10: `register_shutdown_function` commented out** (`firebox_runtime.php:77`)
-Fix: Uncomment after verifying `fbx_error_shutdown()` handles all error types correctly. The current implementation calls `die()` with a plain string — good enough for now.
+Notable tokens: `@` is `error_suppress`, `~` is `bitnot`, `\` is `ns_sep`. These were missing in the original and were added during the cleanup pass — without them, these characters would be silently dropped from compiled output.
 
 ---
 
-## Test Strategy
+## Bugs Fixed During Cleanup Pass
 
-### Compiler tests
-- Unit test `fbx_lexical_parser()` on small PHP snippets: verify token types and order.
-- Unit test `fbx_get_blocks_from_lex()`: verify block detection on known inputs.
-- Integration test `fbx_compile()`: compile a sample controller, verify output file content.
-- Test pre/post inlining: verify variables flow correctly across pre→method→post.
-- Test function renaming: verify all name patterns are correct.
+All of these were fixed. Listed for historical context.
 
-### Runtime/routing tests
-- Test action resolution: `?go=ctrl.method`, `?go=fbx.welcome`, missing `?go`, default_action.
-- Test `control()`: correct function called, parameters passed, return value propagated.
-- Test `fbx_run_file()`: query, action, action_once (dedup), display (return vs echo).
-- Test `setlink()`/`linkto()`/`linkaction()`: relative and absolute actions.
-- Test plugin phases fire in order.
-
-### CLI/headless mode
-- `lay_html.php` checks `$_SERVER['argv']` to output plain text instead of HTML. This enables headless testing. Worth documenting and verifying.
+| Bug | Fix |
+|---|---|
+| `fbx_load_libs()` had dead cache check that always missed | Removed outer check; `fbx_get_function_names()` handles caching internally |
+| `fbx_compile()` used relative paths for file I/O | Prepend `$fbx['site_root']` to `$filename` for `file()` and `filemtime()` |
+| `$type`/`$typeindex` uninitialized in block detector | Reset to null before each backward scan |
+| Closing-brace indentation broke compilation | Fixed operator precedence bug in pre/post check + `name` key always set in blocks |
+| `@include('settings.php')` masked errors | Absolute path + `file_exists()` guard + `ParseError` catch |
+| `count()` on settings arrays crashed PHP 8 | Replaced with `?? []` null-coalescing |
+| XSS in `relocate()` JS fallback | `json_encode($url, JSON_HEX_TAG)` |
+| `register_shutdown_function` commented out | Re-enabled with fatal-type allowlist |
+| Short tags (`<?`) in admin/skeleton files broke PHP 8 (short_open_tag=Off) | Converted to `<?php` |
+| `<? global $fbx, $content; ?>` leaking into HTML output | Changed to `<?php` |
+| `@` operator missing from lexer — dropped from compiled output | Added `error_suppress` token |
+| `@` detection in error handler used `=== 0` (PHP 7 behavior) | Changed to `!(error_reporting() & $errno)` (PHP 8+) |
+| `@$_REQUEST['go']` caused E_WARNING in PHP 8 | Changed to `$_REQUEST['go'] ?? ''` |
+| Blanket E_NOTICE suppression (`$errno == 8`) | Removed |
+| `create_skeleton.php` used `$_REQUEST['target']` without null check | Added `isset()` |
+| `create_skeleton.php` passed `null` to `mkdir()` mode | Changed to `0755` |
+| OPcache caching PHP flat-file data store after writes | Added `opcache_invalidate()` in todo write queries |
 
 ---
 
-## Decisions
+## Test Suite
 
-- **Refactor, not rewrite**: The lexer/compiler is the most complex part and the existing code is the only spec. Preserving it and fixing bugs is safer than rewriting.
-- **Fix bugs in dependency order**: BUG-1 and BUG-4 affect every compile operation, so fix those first.
-- **No new abstractions**: Don't add namespaces, classes, or Composer during this cleanup pass. Keep the flat-function style consistent.
+`php tests/run_tests.php [compiler|http|all]`
+
+184 tests total. Compiler tests require no server. HTTP tests require `bash deploy.sh` first and server at 10.0.0.10.
+
+Key test fixtures in testproject:
+- `controller/fbxtest.php` — pre/post/action_once/setlink/linkaction lifecycle tests
+- `controller/fbxtest_at.php` — @ operator survives compilation
+- `controller/fbxtest_fail.php` — deliberately failing test_ function
+- `model/fbxtest/fbxtest_init.php` — call counter for action_once test
+
+---
+
+## Known Limitations (unfixable without redesign)
+
+1. **No OOP**: Classes, interfaces, traits in user files compile incorrectly. The block detector doesn't recognize `class` as a keyword; methods inside classes get renamed as top-level functions.
+
+2. **No namespaces**: `namespace`/`use` not understood by compiler.
+
+3. **Closures/anonymous functions**: Compile with unpredictable names in edge cases. The `function_exists()` guard prevents crashes but reliability is not guaranteed.
+
+4. **Flat-file PHP data store + OPcache**: Requires explicit `opcache_invalidate()` after every write.
+
+---
+
+## Deployment
+
+`bash deploy.sh` from the firebox repo root:
+- Rsyncs framework files to `10.0.0.10:/var/www/html/firebox/`
+- Rsyncs testproject to `10.0.0.10:/var/www/html/firebox-test/`
+- Creates `parsed/dev/` and `parsed/prod/` with 777 permissions
+- Sets `todo.data` to 666 (writable by www-data)
+
+Test app: `http://10.0.0.10/firebox-test/`

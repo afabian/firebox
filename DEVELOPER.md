@@ -87,8 +87,8 @@ lib/
   - `post()` — body is injected at the bottom of every method; typically calls `layout()` and returns it
   - Regular methods — the action body
 - Compiled function name: `controller_name_method`
-- Test function name: `test_controller_name_method` (defined in the same file)
-- **Known constraint:** The closing `}` of each function must be the first character on its line (compiler bug — see Known Issues).
+- Test function name: `test_name_method` (defined in the controller file itself)
+- **Naming constraint**: do not name controller methods starting with `test_` — the compiler treats those as test functions, not callable methods.
 
 Example:
 ```php
@@ -172,9 +172,9 @@ Compiled `controller.foo.php`:
 ```php
 if (!function_exists('controller_foo_show')) { function controller_foo_show() {
     global $fbx, $content;
-    $x = 1;           // <-- pre() body inlined
+    $x = 1;               // pre() body inlined
     echo $x;
-    return layout('main');  // <-- post() body inlined
+    return layout('main'); // post() body inlined
 }}
 ```
 
@@ -263,11 +263,11 @@ Base URL string ending with `?go=`. Used to build action links: `$myself . 'cont
 
 ```php
 $fbx['settings'] = array(
-    'name'                => 'App Name',          // used in default layout <title>
-    'password'            => 'secret',            // unlocks dev features via ?fbx_pass=
-    'default_action'      => 'ctrl.method',       // action when ?go= is absent
+    'name'                => 'App Name',           // used in default layout <title>
+    'password'            => 'secret',             // unlocks dev features via ?fbx_pass=
+    'default_action'      => 'ctrl.method',        // action when ?go= is absent
     'development_plugins' => array('debug', ...),  // plugins loaded in dev mode
-    'production_plugins'  => array(...),           // plugins loaded in production
+    'production_plugins'  => array(...),            // plugins loaded in production
     'pre'                 => array('ctrl.method'), // global pre-actions (run before every request)
     'post'                => array('ctrl.method'), // global post-actions (run after every request)
     'mysqli_host'         => 'localhost',
@@ -297,46 +297,56 @@ $fbx['settings'] = array(
 
 ---
 
-## Known Issues / Bugs
+## Testing
 
-1. **Compiler closing-brace constraint** (`todo.php` comment): The closing `}` of each function in a controller must be the first character on its line. The block detector scans lexemes backward when it sees `{`, and something about indented closing braces confuses it. Root cause is in `fbx_get_blocks_from_lex` — the backward scan for block type is fragile.
+Run the test suite with:
 
-2. **Relative path in `fbx_compile()`**: `file($filename)` and `filemtime($filename)` use the path as-is (e.g. `controller/foo.php`). These succeed only if PHP's CWD is the site root at the time of the call. Not guaranteed under all web server configurations.
+```bash
+php tests/run_tests.php          # all tests (compiler + HTTP)
+php tests/run_tests.php compiler # compiler unit tests only (no server needed)
+php tests/run_tests.php http     # HTTP integration tests only (requires server)
+```
 
-3. **`fbx_load_libs()` path mismatch**: `fbx_load_libs()` checks for cached lib index files at `parsed/[empty]lib.name.php` (no `dev/`/`prod/` subdirectory), but `fbx_get_function_names()` writes them to `parsed/dev/lib.name.php` or `parsed/prod/lib.name.php`. The check in `fbx_load_libs()` therefore always misses the cache, causing re-scan every request.
+HTTP tests hit `http://10.0.0.10/firebox-test/` and require the testproject to be deployed first (`bash deploy.sh`).
 
-4. **`fbx_load_libs()` signature mismatch**: Defined as `fbx_load_libs()` (no args) but called as `fbx_load_libs($fbx['site_root'] . 'lib/')`. The argument is silently ignored; the function uses the global `$fbx['site_root']` directly.
+### Test structure
 
-5. **`$type`/`$typeindex` uninitialized in `fbx_get_blocks_from_lex()`**: If `{` appears without a preceding keyword (e.g. in an array literal `array()` or a class body), the backward scan finds no match and `$type`/`$typeindex` remain set from the previous iteration (or undefined on first occurrence). This can produce incorrect block entries.
+```
+tests/
+  run_tests.php           Main runner
+  helpers.php             Assertion library
+  bootstrap.php           Minimal compiler bootstrap for CLI tests
+  compiler/
+    test_lexer.php        Lexer tokenization (state machine, all token types)
+    test_blocks.php       Block detector (function detection, depth tracking)
+    test_references.php   Function reference detector
+    test_compile.php      Full compilation pipeline, caching, lib scanning
+  http/
+    test_routing.php      Action routing, production mode, URL options
+    test_lifecycle.php    pre/post/action_once, plugins, setlink, redirect
+    test_errors.php       Error handling, test failures, @ suppression
+```
 
-6. **`register_shutdown_function` commented out** (`firebox_runtime.php:77`): Fatal parse errors and OOM errors won't display a clean error page — PHP will output a raw fatal error or blank page.
+### Adding tests to user code
 
-7. **`@include('settings.php')` suppresses parse errors**: If `settings.php` has a syntax error, it silently fails and `$fbx['settings']` will be undefined, causing downstream errors with no clear message.
+The framework automatically runs test functions in dev mode. Name them to match the compiled function pattern:
 
-8. **`E_NOTICE` (errno 8) suppressed globally**: The error handler silently drops all PHP notices. This hides undefined variable warnings that would otherwise catch real bugs.
-
-9. **XSS in `relocate()`**: The JavaScript fallback redirect uses `$url` unescaped inside a JS string: `document.location.href='$url'`. If `$url` contains a single quote, it breaks the JS. Not exploitable for cross-site attacks in normal use (URL comes from `linkto()`), but worth fixing.
-
-10. **`count()` on non-array in PHP 8**: Several places call `count($fbx['settings'])`, `count($fbx['settings']['production_plugins'])`, etc. without checking if the key exists first. PHP 8 throws a `TypeError` for `count(null)`.
-
-11. **Debug buffer capped at 1000 entries** (`firebox_runtime.php:217`): `array_shift` is used to trim the buffer, which is O(n) on every message after 1000. Not a correctness issue but a performance note.
-
-12. **`fbx_error()` in admin context uses skeleton layout**: When a `fbx.*` or `plugin.*` action triggers `fbx_error()`, the error page still tries to use `skeleton/lay_html.php`. If the project has no skeleton directory, this fails.
+- Controller method `show_list` → define `function test_show_list()` in the same controller file
+- Model file `qry_s_items.php` → define `function test_qry_s_items()` in the same file
+- Test functions must return `true` to pass or `false` to fail. A failing test aborts the request with an error.
 
 ---
 
-## Todo
+## Known Limitations
 
-- [ ] Fix closing-brace compiler constraint (issue #1)
-- [ ] Fix `fbx_compile()` relative path issue (issue #2)
-- [ ] Fix `fbx_load_libs()` path/signature mismatch (issues #3, #4)
-- [ ] Fix uninitialized `$type` in block detector (issue #5)
-- [ ] Re-enable or remove `register_shutdown_function` (issue #6)
-- [ ] Fix `@include` on settings.php (issue #7)
-- [ ] Remove blanket E_NOTICE suppression (issue #8)
-- [ ] Fix XSS in `relocate()` JS fallback (issue #9)
-- [ ] Add PHP 8 `count()` guards (issue #10)
-- [ ] Write test suite for the compiler
-- [ ] Write test suite for the runtime/routing
-- [ ] Add `parsed/dev/` and `parsed/prod/` to `.gitignore`
-- [ ] Document headless/CLI mode (currently supported via `$_SERVER['argv']` check in `lay_html.php`)
+These are design constraints of the compiler, not fixable bugs:
+
+1. **No OOP support in user files**: Classes, interfaces, traits, and enums in controller/model/view files will compile incorrectly. The compiler's block detector does not recognise `class` as a block keyword. Methods inside classes will be detected as top-level functions and renamed incorrectly. Firebox is designed for procedural PHP.
+
+2. **No namespace support**: `namespace` and `use` statements in user files are not understood by the compiler. Namespaced function calls won't match lib function lookup.
+
+3. **Anonymous functions / closures** have unpredictable compiled names. They work in simple cases (the `function_exists()` guard prevents crashes) but are not reliable inside controllers. Use named helper functions instead.
+
+4. **Flat-file PHP data store requires OPcache invalidation**: If you use PHP files as a data store (as in the todo demo), call `opcache_invalidate($file, true)` after every write, otherwise PHP's OPcache will serve stale data on the next read.
+
+5. **No built-in session management, CSRF protection, or authentication**: these are application-level concerns outside the framework's scope.
