@@ -145,7 +145,7 @@ function fbx_compile($filename)
 	$pre_post_requires = array();
 	foreach ($blocks as $block)
 	{
-		if ($is_controller && (@$block['type'] == 'function' && @$block['name'] == 'pre' || @$block['name'] == 'post'))
+		if ($is_controller && $block['type'] == 'function' && ($block['name'] == 'pre' || $block['name'] == 'post'))
 		{
 			foreach($refs as $ref)
 			{
@@ -428,9 +428,7 @@ function fbx_get_blocks_from_lex($lex)
 				}
 			}
 
-			$blocks[] = array('start' => $lexeme['pos'], 'startindex' => $counter, 'type' => $type, 'typeindex' => $typeindex, 'depth' => $depth, 'end' => false, 'endindex' => false);
-			if ($type == 'function') $blocks[count($blocks)-1]['name'] = $name;
-			if ($type == 'function') $blocks[count($blocks)-1]['nameindex'] = $nameindex;
+			$blocks[] = array('start' => $lexeme['pos'], 'startindex' => $counter, 'type' => $type, 'typeindex' => $typeindex, 'name' => ($type == 'function' ? $name : null), 'nameindex' => ($type == 'function' ? $nameindex : null), 'depth' => $depth, 'end' => false, 'endindex' => false);
 			$depth++;
 		}
 		
