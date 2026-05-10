@@ -1,0 +1,8 @@
+<?php
+
+return(array( 
+               array( 'id' => 0, 'title' => 'First Item', 'due' => time() + 300, 'done' => 0, 'details' => 'This is the first item, the complete first item, and nothing but the first item.' ),
+               array( 'id' => 1, 'title' => 'Completed Item', 'due' => time() - 100, 'done' => 1, 'details' => 'This is a completed item.' ),
+               array( 'id' => 2, 'title' => 'Second Item', 'due' => time() + 200, 'done' => 0, 'details' => 'First is worst, second is best.' ),
+             ));
+             

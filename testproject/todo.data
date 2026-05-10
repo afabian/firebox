@@ -1,0 +1,5 @@
+<?php return(array (
+  0 => array ( 'id' => 1, 'title' => 'Set up Firebox framework', 'due' => 1748390400, 'done' => false, 'details' => 'Install and configure Firebox on the server.' ),
+  1 => array ( 'id' => 2, 'title' => 'Write compiler unit tests', 'due' => 1749081600, 'done' => false, 'details' => 'Add test coverage for fbx_lexical_parser, fbx_get_blocks_from_lex, and fbx_compile.' ),
+  2 => array ( 'id' => 3, 'title' => 'Fix known compiler bugs', 'due' => 1747699200, 'done' => false, 'details' => 'BUG-1: fbx_load_libs path mismatch. BUG-2: uninitialized $type in block detector. BUG-4: relative paths in fbx_compile.' ),
+));
