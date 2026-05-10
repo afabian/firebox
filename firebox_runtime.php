@@ -155,7 +155,7 @@ elseif (substr($fbx['action'], 0, 7) == 'plugin.')
 else 
 {
 	fbx_debug("Running Action via control()", __FILE__, __LINE__);
-	if (!is_array(@$fbx['action_parameters'])) $fbx['action_parameters'] = array();
+	if (!isset($fbx['action_parameters']) || !is_array($fbx['action_parameters'])) $fbx['action_parameters'] = array();
 	array_unshift($fbx['action_parameters'], $fbx['action']);
 	$content['html'] = call_user_func_array('control', $fbx['action_parameters']);
         fbx_execute_plugins('posthtml');

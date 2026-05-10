@@ -328,7 +328,7 @@ function fbx_lexical_parser_next_lexeme($haystack, $needles, $offset, &$match, &
 				
 		if ($pattern[0]=='/')
 		{
-			$mypos = preg_match($pattern, $haystack, $mycontent, null, $offset);
+			$mypos = preg_match($pattern, $haystack, $mycontent, 0, $offset);
 			if ($mypos)
 			{
 			    if (is_array($data)) {
@@ -585,6 +585,7 @@ function fbx_get_function_names($filename)
 function fbx_dir_tree_files($dir, $match_regex='')
 {
 	 $files = array();
+	 if (!is_dir($dir)) return($files);
 	 $dh = opendir($dir) or die("Couldn't open $dir");
 	 while ($rec = readdir($dh))
 	 {

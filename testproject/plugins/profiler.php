@@ -22,6 +22,7 @@ function profiler_start_timer($item_name)
 function profiler_enter($item_name)
 {
 	global $fbx;
+	if (!isset($fbx['profiler']['index'])) $fbx['profiler']['index'] = 0;
 	$fbx['profiler']['stack'][] = array('index' => $fbx['profiler']['index']++, 'item_name' => $item_name, 'start_time' => microtime(true));
 }
 
