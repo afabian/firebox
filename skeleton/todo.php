@@ -1,11 +1,5 @@
 <?php
 
-// $fbx and $content are available inside of controller functions
-// controllers must call each other via control(), not directly
-
-// special rule until the compiler is fixed: the closing bracket of
-// a fn must be the very first character in it's line, not indented.
-
 function pre()
 {
 	$datafile = action('define_datafile');
