@@ -100,15 +100,15 @@ fbx_debug('Mode: ' . ($fbx['production'] ? 'Production' : 'Development'), __FILE
 
 if ($fbx['production'])
 {
-	if (count($fbx['settings']['production_plugins'])) foreach ($fbx['settings']['production_plugins'] as $plugin) 
+	foreach ($fbx['settings']['production_plugins'] ?? [] as $plugin)
 	{
 		fbx_debug("Loading production plugin $plugin", __FILE__, __LINE__);
 		require($fbx['site_root'] . 'plugins/' . $plugin . '.php');
 	}
 }
-else 
+else
 {
-	if (count($fbx['settings']['development_plugins'])) foreach ($fbx['settings']['development_plugins'] as $plugin) 
+	foreach ($fbx['settings']['development_plugins'] ?? [] as $plugin)
 	{
 		fbx_debug("Loading development plugin $plugin", __FILE__, __LINE__);
 		require($fbx['site_root'] . 'plugins/' . $plugin . '.php');
@@ -132,7 +132,7 @@ fbx_execute_plugins('preexec');
 
 // run preexec actions
 
-if (count($fbx['settings']['pre'])) foreach ($fbx['settings']['pre'] as $action)
+foreach ($fbx['settings']['pre'] ?? [] as $action)
 {
 	fbx_debug("Running Global PreAction $action via control()", __FILE__, __LINE__);
 	echo control($action);
@@ -168,7 +168,7 @@ else
 
 // run postexec actions
 
-if (count($fbx['settings']['post'])) foreach ($fbx['settings']['post'] as $action)
+foreach ($fbx['settings']['post'] ?? [] as $action)
 {
 	fbx_debug("Running Global PostAction $action via control()", __FILE__, __LINE__);
 	echo control($action);
@@ -227,8 +227,8 @@ function fbx_debug($message, $filename, $line)
 function fbx_execute_plugins($phase, $item_name = '')
 {
 	$output = null;
-	if (isset($GLOBALS['fbx']['plugins'][$phase]) && count(@$GLOBALS['fbx']['plugins'][$phase])) {
-		foreach (@$GLOBALS['fbx']['plugins'][$phase] as $plugin) 
+	if (isset($GLOBALS['fbx']['plugins'][$phase]) && count($GLOBALS['fbx']['plugins'][$phase])) {
+		foreach ($GLOBALS['fbx']['plugins'][$phase] as $plugin)
 		{
 			fbx_debug("Running $phase plugin $plugin", __FILE__, __LINE__);
 			$output = $plugin($item_name);
