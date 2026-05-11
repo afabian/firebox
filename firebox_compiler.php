@@ -2,24 +2,7 @@
 
 /* Firebox - PHP Web Application Framework
    Copyright (C) 2007 Andrew J. Fabian
-   
-   Andrew J. Fabian can be reached via email at afabian@anjero.com, or at this address:
-   209 S. Knollwood Dr.
-   Suite 1301
-   Blacksburg, VA 24060
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   Released under the GNU General Public License v3. See license.txt.
 */
 
 function fbx_compile($filename)
@@ -27,11 +10,9 @@ function fbx_compile($filename)
 	global $fbx, $content;
 	
 	$is_controller = substr($filename, 0, 10) == 'controller';
-	$is_model = substr($filename, 0, 5) == 'model';
-	$is_view = !$is_controller && !$is_model;
-	
-	// load and compile our list of libraries, and their source files
-	// this also compiles require() statements so that relative paths are made explicit to site_root/lib
+	$is_model      = substr($filename, 0, 5)  == 'model';
+
+	// load the list of library functions and their source files
 	
 	if (!isset($fbx['libs']))
 	{
@@ -65,7 +46,7 @@ function fbx_compile($filename)
 
 	fbx_debug("Reading file", __FILE__, __LINE__);
 	if (!file_exists($sourcefile)) fbx_error("Source file not found: $sourcefile");
-	$input = join('', file($sourcefile));
+	$input = file_get_contents($sourcefile);
 		
 	// turn the file into lexemes
 	
@@ -115,7 +96,7 @@ function fbx_compile($filename)
 	
 	// find the contents of our pre and post functions, if they exist; and where to cut to remove them from the output
 
-	fbx_debug("Getting contents of pre() and post() functions, if thsey exist.", __FILE__, __LINE__);
+	fbx_debug("Getting contents of pre() and post() functions, if they exist.", __FILE__, __LINE__);
 		   
 	$pre = '';
 	$post = '';
@@ -200,7 +181,7 @@ function fbx_compile($filename)
 
 	foreach ($refs as $ref)
 	{
-		if (false !== array_search($ref['function'], array_keys($functions)))
+		if (isset($functions[$ref['function']]))
 		{
 			fbx_debug("Updating function reference to {$ref['function']}", __FILE__, __LINE__);
 			$lex[$ref['index']]['content'] = $functions[$ref['function']];
@@ -509,7 +490,7 @@ function fbx_get_function_names($filename)
 	
 	// if that file exists and is up-to-date, run it and return the results immediately
 	
-	if (file_exists($outputfile) && filemtime($filename) <= @filemtime($outputfile))
+	if (file_exists($outputfile) && filemtime($filename) <= filemtime($outputfile))
 	{
 		fbx_debug("Skipping compile of $filename because it's parsed copy is still current.", __FILE__, __LINE__);
 		return(require($outputfile));
@@ -520,10 +501,10 @@ function fbx_get_function_names($filename)
 	// read in the source file
 	
 	fbx_debug("Reading file", __FILE__, __LINE__);
-	$input = join('', file($filename));
-		
+	$input = file_get_contents($filename);
+
 	// turn the file into lexemes
-	
+
 	fbx_debug("Running lexical parser", __FILE__, __LINE__);
 	$lex = fbx_lexical_parser($input);
 		
@@ -583,7 +564,7 @@ function fbx_dir_tree_files($dir, $match_regex='')
 {
 	 $files = array();
 	 if (!is_dir($dir)) return($files);
-	 $dh = opendir($dir) or die("Couldn't open $dir");
+	 $dh = opendir($dir) or fbx_error("Couldn't open directory: $dir");
 	 while ($rec = readdir($dh))
 	 {
 	 	if ($rec !== false && $rec != '.' && $rec != '..')

@@ -13,6 +13,13 @@ foreach ($new_directories as $new_directory)
 
 // copy files
 
+if (!is_file($fbx['site_root'] . 'index.php'))
+{
+	$index = file_get_contents($fbx['fbx_root'] . 'skeleton/index.php');
+	$index = str_replace('XXXX', fbx_relative_path($fbx['site_root'], $fbx['fbx_root']), $index);
+	file_put_contents($fbx['site_root'] . 'index.php', $index);
+}
+
 copy($fbx['fbx_root'] . 'skeleton/settings_todo.php', $fbx['site_root'] . 'settings.php');
 
 copy($fbx['fbx_root'] . 'skeleton/todo.php', $fbx['site_root'] . 'controller/todo.php');

@@ -2,29 +2,13 @@
 
 /* Firebox - PHP Web Application Framework
    Copyright (C) 2007 Andrew J. Fabian
-   
-   Andrew J. Fabian can be reached via email at afabian@anjero.com, or at this address:
-   209 S. Knollwood Dr.
-   Suite 1301
-   Blacksburg, VA 24060
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   Released under the GNU General Public License v3. See license.txt.
 */
 
-// this needs to be defined early now.  working on a fix...
+// fbx_plugin_register must be defined before settings.php is loaded, since
+// plugins can be registered during settings loading.
 
-if (!function_exists('fbx_plugin_register')) 
+if (!function_exists('fbx_plugin_register'))
 {
 	function fbx_plugin_register($phase, $plugin)
 	{
@@ -45,7 +29,7 @@ $fbx['production'] = false;
 $fbx['version'] = '0.6';
 
 fbx_debug("Firebox {$fbx['version']} by Andrew Fabian", __FILE__, __LINE__);
-fbx_debug('Request: ' . @$_SERVER['REQUEST_URI'], __FILE__, __LINE__);
+fbx_debug('Request: ' . ($_SERVER['REQUEST_URI'] ?? ''), __FILE__, __LINE__);
 
 // set up our paths
 
@@ -162,8 +146,8 @@ else
 	if (!isset($fbx['action_parameters']) || !is_array($fbx['action_parameters'])) $fbx['action_parameters'] = array();
 	array_unshift($fbx['action_parameters'], $fbx['action']);
 	$content['html'] = call_user_func_array('control', $fbx['action_parameters']);
-        fbx_execute_plugins('posthtml');
-        echo $content['html'];
+	fbx_execute_plugins('posthtml');
+	echo $content['html'];
 }
 
 // run postexec actions
@@ -188,7 +172,7 @@ function fbx_require_output($filename)
 {
 	if (!file_exists($filename)) return(false);
 	ob_start();
-	global $fbx, $xfa, $content, $myself;
+	global $fbx, $content, $myself;
 	require($filename);
 	$output = ob_get_contents();
 	ob_end_clean();
@@ -240,7 +224,7 @@ function fbx_execute_plugins($phase, $item_name = '')
 function fbx_url_option($option)
 {
 	global $fbx;
-	if ((isset($fbx) && !$fbx['production']) || (isset($_REQUEST['fbx_pass']) && $_REQUEST['fbx_pass'] == $fbx['settings']['password']))
+	if (!$fbx['production'] || (isset($_REQUEST['fbx_pass']) && $_REQUEST['fbx_pass'] == $fbx['settings']['password']))
 	{
 		return (isset($_REQUEST[$option]) ? $_REQUEST[$option] : false);
 	}

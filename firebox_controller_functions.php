@@ -2,24 +2,7 @@
 
 /* Firebox - PHP Web Application Framework
    Copyright (C) 2007 Andrew J. Fabian
-   
-   Andrew J. Fabian can be reached via email at afabian@anjero.com, or at this address:
-   209 S. Knollwood Dr.
-   Suite 1301
-   Blacksburg, VA 24060
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   Released under the GNU General Public License v3. See license.txt.
 */
 
 function display($filename)
@@ -157,7 +140,7 @@ function control($action)
 	fbx_debug("Compiled controller function is $functionname", __FILE__, __LINE__);
 	if (!function_exists($functionname)) fbx_error('Controller function ' . $method . ', compiled as ' . $functionname . ', doesn\'t exist in file ' . $filename . '.');
 	$function_args = func_get_args(); array_shift($function_args);
-	$output = @call_user_func_array($functionname, $function_args);
+	$output = call_user_func_array($functionname, $function_args);
 	
 	// run postcontrol plugins
 	
@@ -265,8 +248,44 @@ function fbx_run_file($type, $path, $only_once, $filename)
 	// clean up and return our output
 	
 	$fbx['debug_indent']--;
-	
+
 	array_pop($fbx['call_stack']);
 
 	return($output);
+}
+
+// Computes the relative path from $from_dir to $to_dir. Both must be absolute.
+// Used by admin/create_skeleton.php and admin/create_todo.php to build index.php.
+
+function fbx_relative_path($from_dir, $to_dir)
+{
+	if (!(isset($_SERVER['WINDIR']) && $from_dir[1] == ':' && $to_dir[1] == ':') && !(empty($_SERVER['WINDIR']) && $from_dir[0] == '/' && $to_dir[0] == '/'))
+		fbx_error("Non-absolute path given to fbx_relative_path: $from_dir, $to_dir");
+
+	$to_array   = explode('/', str_replace('\\', '/', $to_dir));
+	$from_array = explode('/', str_replace('\\', '/', $from_dir));
+
+	if (empty($to_array[count($to_array)-1]))     array_pop($to_array);
+	if (empty($from_array[count($from_array)-1])) array_pop($from_array);
+
+	$path  = '';
+	$stack = array();
+
+	while (count($from_array) > count($to_array)) { $path .= '../'; array_pop($from_array); }
+	while (count($to_array) > count($from_array))   $stack[] = array_pop($to_array);
+
+	if (isset($_SERVER['WINDIR']))
+	{
+		for ($i = 0; $i < count($to_array);   $i++) $to_array[$i]   = strtolower($to_array[$i]);
+		for ($i = 0; $i < count($from_array); $i++) $from_array[$i] = strtolower($from_array[$i]);
+	}
+
+	while ($to_array != $from_array)
+	{
+		$path   .= '../';
+		$stack[] = array_pop($to_array);
+		array_pop($from_array);
+	}
+
+	return $path . implode('/', $stack);
 }

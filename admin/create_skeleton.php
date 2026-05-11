@@ -8,14 +8,11 @@ if (!is_dir($target)) mkdir($target, 0755, true);
 
 // create the skeleton project
 
-//error_reporting(E_ALL);
-
 $new_directories = array( 'controller', 'model', 'model/default', 'view', 'view/default', 'layout', 'layout/default', 'lib', 'parsed', 'parsed/dev', 'parsed/prod', 'plugins' );
 
 foreach ($new_directories as $new_directory)
 {
-	$status = @mkdir($target . $new_directory);
-	//echo "mkdir $target$new_directory: status=" . var_export($status, true) . "<br>";
+	@mkdir($target . $new_directory);
 }
 
 // copy files
@@ -43,50 +40,7 @@ copy($fbx['fbx_root'] . 'skeleton/menu.php', $target . 'plugins/menu.php');
 
 copy($fbx['fbx_root'] . 'skeleton/lay_html.php', $target . 'layout/default/lay_html.php');
 
-// helper function.  this could be moved up to the core files if it were used anywhere else
-
-function fbx_relative_path($from_dir, $to_dir)
-{
-	// both paths must be absolute for this to work
-	
-	if (!($_SERVER['WINDIR'] && $from_dir[1] == ':' && $to_dir[1] == ':') && !(!$_SERVER['WINDIR'] && $from_dir[0] == '/' && $to_dir[0] == '/'))
-	    fbx_error("Non-absolute path given to fbx_relative_path: $from_dir, $to_dir");
-	    
-	$to_array = explode('/', str_replace('\\', '/', $to_dir));
-	$from_array = explode('/', str_replace('\\', '/', $from_dir));
-
-	if (empty($to_array[count($to_array)-1])) array_pop($to_array);
-	if (empty($from_array[count($from_array)-1])) array_pop($from_array);	
-	
-	$path = '';
-	$stack = array();
-	
-	while (count($from_array) > count($to_array))
-	{
-		$path .= '../';
-		array_pop($from_array);
-	}
-	
-	while (count($to_array) > count($from_array))
-		$stack[] = array_pop($to_array);
-	
-	if ($_SERVER['WINDIR'])
-	{
-		for ($i = 0; $i<count($to_array); $i++) $to_array[$i] = strtolower($to_array[$i]);
-		for ($i = 0; $i<count($from_array); $i++) $from_array[$i] = strtolower($from_array[$i]);
-	}
-
-	while ($to_array != $from_array)
-	{
-		$path .= '../';
-		$stack[] = array_pop($to_array);
-		array_pop($from_array);
-	}
-	
-	return($path . join('/', $stack));
-}
-
-// say something
+// say something — fbx_relative_path() is defined in firebox_controller_functions.php
 
 ?>
 

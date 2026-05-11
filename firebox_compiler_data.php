@@ -73,7 +73,7 @@ $fbx['lex']['php']['concatto'] = '.=';
 $fbx['lex']['php']['addto'] = '+=';
 $fbx['lex']['php']['subto'] = '-=';
 $fbx['lex']['php']['multto'] = '*=';
-$fbx['lex']['php']['divto'] = '\\=';
+$fbx['lex']['php']['divto'] = '/\/=/';
 $fbx['lex']['php']['modto'] = '%=';
 $fbx['lex']['php']['bitandto'] = '&=';
 $fbx['lex']['php']['bitorto'] = '|=';
@@ -102,8 +102,7 @@ $fbx['lex']['php']['assign'] = '=';
 
 $fbx['lex']['php']['and'] = '&&';
 $fbx['lex']['php']['or'] = '||';
-$fbx['lex']['php']['reference'] = '&';
-$fbx['lex']['php']['bitand'] = '&';
+$fbx['lex']['php']['ampersand'] = '&';
 $fbx['lex']['php']['not'] = '!';
 $fbx['lex']['php']['bitxor'] = '^';
 $fbx['lex']['php']['bitor'] = '|';
