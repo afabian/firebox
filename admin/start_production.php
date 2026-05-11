@@ -8,6 +8,13 @@ fbx_debug("Compiling everything", __FILE__, __LINE__);
 
 require_once($fbx['fbx_root'] . 'firebox_compiler.php');
 
+// clear stale compiled files before recompiling
+
+fbx_debug("Clearing production cache", __FILE__, __LINE__);
+
+foreach (fbx_dir_tree_files($fbx['site_root'] . 'parsed/prod/', '/.*\.php$/') as $file)
+	unlink($file);
+
 $files = array_merge(
 	fbx_dir_tree_files($fbx['site_root'] . 'controller/', '/.*\.php$/'),
 	fbx_dir_tree_files($fbx['site_root'] . 'model/',      '/.*\.php$/'),

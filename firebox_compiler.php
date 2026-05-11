@@ -215,6 +215,7 @@ function fbx_compile($filename)
 	fbx_debug("Writing out $outputfile", __FILE__, __LINE__);
 	fputs($fh, $output);
 	fclose($fh);
+	touch($outputfile, filemtime($sourcefile));
 	
 	if (!empty($content['debugpanes']['compiler']))
 	{	
