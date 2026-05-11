@@ -192,18 +192,20 @@ function fbx_compile($filename)
 	
 	if (!count($functions))
 	{
-		array_unshift($lex, array('content' => '<?php global $fbx, $content; ?>'));
+		array_unshift($lex, array('state' => 'php', 'type' => 'o_php1', 'content' => '<?php global $fbx, $content; ?>', 'pos' => 0));
 	}
 	
-	// build out output by combining all of the modified lexemes back togethers
-	
+	// build out output by combining all of the modified lexemes back together.
+	// o_php2 ('<?') is upgraded to '<?php' so compiled output never relies on short_open_tag.
+	// o_php_echo ('<?=') is preserved as-is — it's always enabled regardless of short_open_tag.
+
 	fbx_debug("Building and writing output", __FILE__, __LINE__);
 	$output = '';
 	for ($i=0; $i<count($lex); $i++)
 	{
 		if ( !($pre && $i >= $prestartindex && $i<=$preendindex) && !($post && $i >= $poststartindex && $i <= $postendindex) )
 		{
-			$output .= $lex[$i]['content'];
+			$output .= ($lex[$i]['type'] == 'o_php2') ? '<?php' : $lex[$i]['content'];
 		}
 	}
 		

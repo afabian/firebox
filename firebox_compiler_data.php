@@ -29,9 +29,10 @@ global $fbx;
 // if just a string, match element, no state change
 // if array: element, new state or "POP", optional which preg_match match index to keep
 
-$fbx['lex']['html']['o_php1'] = array('<?php', 'php');
-$fbx['lex']['html']['o_php2'] = array('<?', 'php');
-$fbx['lex']['html']['html'] = array('/((.|\n)+?)(\<\?|$)/', false, 1);
+$fbx['lex']['html']['o_php1']    = array('<?php', 'php');  // full open tag
+$fbx['lex']['html']['o_php_echo'] = array('<?=',  'php');  // short echo — always enabled, preserved as-is
+$fbx['lex']['html']['o_php2']    = array('<?',   'php');   // short open tag — upgraded to <?php on output
+$fbx['lex']['html']['html']      = array('/((.|\n)+?)(\<\?|$)/', false, 1);
 
 $fbx['lex']['php']['c_php'] = array('?>', 'POP');
 

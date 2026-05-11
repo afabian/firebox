@@ -31,9 +31,11 @@ function all_contents($input, $type)
 section('PHP block entry/exit');
 
 $lex = lex('before<?phpafter?>end');
-assert_true(in_array('o_php1', lex_types('<?php $x;')), 'long open tag produces o_php1');
-assert_true(in_array('o_php2', lex_types('<? $x;')),    'short open tag produces o_php2');
-assert_true(in_array('c_php',  lex_types('<?php ?>')) ,  'close tag produces c_php');
+assert_true(in_array('o_php1',    lex_types('<?php $x;')),  'long open tag produces o_php1');
+assert_true(in_array('o_php2',    lex_types('<? $x;')),     'short open tag produces o_php2');
+assert_true(in_array('o_php_echo',lex_types('<?=$x?>')),    'short echo tag produces o_php_echo');
+assert_false(in_array('o_php2',   lex_types('<?=$x?>')),    '<?= does not produce o_php2');
+assert_true(in_array('c_php',     lex_types('<?php ?>')) ,  'close tag produces c_php');
 
 $mixed = lex('<html><?php $x; ?></html>');
 $states = array_column($mixed, 'state');
