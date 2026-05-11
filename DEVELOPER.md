@@ -180,9 +180,10 @@ if (!function_exists('controller_foo_show')) { function controller_foo_show() {
 
 ### Caching
 
-- Compiled files are cached by mtime: if `parsed/dev/file.php` is newer than the source, compilation is skipped.
-- In production mode, compilation is never triggered — only the cached `parsed/prod/` files are used.
-- `$fbx['compiled']` tracks files already compiled this request to avoid double-compilation.
+- Compiled files are cached by mtime: if `parsed/dev/file.php` mtime >= source mtime, compilation is skipped. After writing a compiled file, its mtime is explicitly set to match the source via `touch()`, so equal timestamps mean "compiled from this exact version."
+- In dev mode the compiler is called on every request but exits immediately if the cache is current.
+- In production mode, compilation is never triggered — only the cached `parsed/prod/` files are used. To recompile, run `admin.start_production`, which first clears all files from `parsed/prod/` and then recompiles everything. This ensures removed or renamed source files don't leave stale compiled output behind.
+- `$fbx['compiled']` tracks files already compiled this request to avoid double-compilation within a single request.
 
 ---
 

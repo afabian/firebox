@@ -2,7 +2,13 @@
 
 ## Project Status (2026-05-10)
 
-**Cleanup/debug/test/documentation pass complete.** All known bugs fixed, full test suite written and passing (184 tests), all documentation updated. Framework is production-ready for procedural PHP apps.
+**Cleanup/debug/test/documentation pass complete.** All known bugs fixed, full test suite written and passing (186 tests), all documentation updated. Framework is production-ready for procedural PHP apps.
+
+### Recent changes (post-cleanup)
+
+- **Short tag upgrade**: `<?` in compiled output is now always emitted as `<?php`. `<?=` (always-on) preserved verbatim as a distinct `o_php_echo` token. Compiled files no longer require `short_open_tag = On`.
+- **Precise mtime tracking**: After compiling, the output file's mtime is set to exactly match the source file's mtime via `touch($outputfile, filemtime($sourcefile))`. The timestamp check (`filemtime(source) <= filemtime(output)`) now means "compiled from this exact version."
+- **Prod cache clearing**: `start_production.php` now deletes all `parsed/prod/*.php` files before recompiling. Prevents stale compiled files from surviving a source rename or deletion.
 
 ---
 
@@ -110,7 +116,7 @@ All of these were fixed. Listed for historical context.
 
 `php tests/run_tests.php [compiler|http|all]`
 
-184 tests total. Compiler tests require no server. HTTP tests require `bash deploy.sh` first and server at 10.0.0.10.
+186 tests total. Compiler tests require no server. HTTP tests require `bash deploy.sh` first and server at 10.0.0.10.
 
 Key test fixtures in testproject:
 - `controller/fbxtest.php` — pre/post/action_once/setlink/linkaction lifecycle tests
